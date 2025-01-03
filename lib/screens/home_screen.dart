@@ -21,12 +21,12 @@ class _HomeScreenState extends State<HomeScreen> {
         // setup the URL for your API here
         future: () async {
           final response =
-              await http.get(Uri.parse('https://narutodb.xyz/api/character'));
+              await http.get(Uri.parse('https://www.themealdb.com/api/json/v1/1/search.php?f=a'));
           if (response.statusCode == 200) {
             final Map<String, dynamic> jsonData = json.decode(response.body);
-            final List<dynamic> charactersJson = jsonData['characters'];
-            return charactersJson
-                .map((data) => Character.fromJson(data))
+            final List<dynamic> mealsJson = jsonData['meals'];
+            return mealsJson
+                .map((data) => Meal.fromJson(data))
                 .toList();
           } else {
             throw Exception('Failed to load data');
@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   itemCount: snapshot.data!.length,
                   maxOpened: 10,
                   itemBuilder: (context, index, con) {
-                    final character = snapshot.data![index];
+                    final meal = snapshot.data![index];
                     return ExpandedTile(
                       theme: const ExpandedTileThemeData(
                         headerColor: Colors.green,
@@ -50,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         contentPadding: EdgeInsets.all(24.0),
                     ),
                     title: Text(
-                      character.name,
+                      meal.name,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -59,30 +59,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     content: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
+                        Image.network(
+                          meal.image,
                           height: 150,
                           width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            image: DecorationImage(
-                              image: NetworkImage(character.image),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                          fit: BoxFit.cover,
                         ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          "Unique Traits",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                        const SizedBox(height: 8),
+                        Text(
+                          "Tags: ${meal.tags}",
+                          style: const TextStyle(
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic,
                           ),
                         ),
                       ],
                     ),
                     controller: con,
                   );
-                });
+                },
+                );
           } else {
             return const Center(
               child: Text("Error"),
@@ -94,24 +90,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class Character {
+class Meal {
   final String name;
   final String image;
-  final List<String> uniqueTraits;
+  final List<String> tags;
 
-  Character({
+  Meal({
     required this.name,
     required this.image,
-    required this.uniqueTraits,
+    required this.tags,
   });
 
- factory Character.fromJson(Map<String, dynamic> json) {
-    return Character(
-      name: json['name'] ?? "Unknown",
-      image: (json['images'] as List<dynamic>).isNotEmpty
-          ? json['images'][0] as String
-          : "https://via.placeholder.com/150", // Default image if none found
-      uniqueTraits: List<String>.from(json['uniqueTraits'] ?? []),
+   factory Meal.fromJson(Map<String, dynamic> json) {
+    return Meal(
+      name: json['strMeal'],
+      image: json['strMealThumb'],
+      tags: json['strTags'] != null
+          ? json['strTags'].split(',') // Split the string into a list
+          : [], // If null, return an empty list
     );
   }
 }
